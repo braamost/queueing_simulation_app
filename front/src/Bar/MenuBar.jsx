@@ -33,7 +33,40 @@ function MenuBar() {
   });
 
   useEffect(() => {
-    
+    if (webMessage) {
+      // Extract the machinesStates from the WebSocket message
+      const { machinesStates } = webMessage;
+  
+      // Iterate over the machinesStates to find the machine with the matching id
+      for (const machineKey in machinesStates) {
+        if (machinesStates.hasOwnProperty(machineKey)) {
+          const machineState = machinesStates[machineKey];
+          const { id, color } = machineState;
+  
+          // Find the machine with the matching id
+          const machineIndex = machines.findIndex((machine) => machine.id === id);
+  
+          if (machineIndex !== -1) {
+            // Extract the color values from the color object
+            const { blue, green, red } = color;
+  
+            // Create a CSS color string (e.g., "rgb(124, 236, 110)")
+            const backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+            console.log("Machine found at index:", machineIndex);
+            console.log("Extracted id:", id, "and color:", color);
+  
+            // Update the machine's background color
+            setMachines((prevMachines) =>
+              prevMachines.map((machine, index) =>
+                index === machineIndex
+                  ? { ...machine, backgroundColor } // Update the background color
+                  : machine
+              )
+            );
+          }
+        }
+      }
+    }
   }, [webMessage]);
 
   const addMachine = () => {
@@ -42,6 +75,7 @@ function MenuBar() {
       id: `M${machines.length + 1}`,
       type: "machine",
       connect:0,
+      backgroundColor:null,
       x: 50+75*machines.length,
       y: 50,
     };
@@ -219,6 +253,7 @@ function MenuBar() {
         setProducts={setProducts}
         simulationStarted={simulationStarted}
         startingId={startingId}
+        sendJsonMessage={sendJsonMessage}
       />
       </div>
 
@@ -241,7 +276,7 @@ function MenuBar() {
                 width: "60px",
                 height: "60px",
                 borderRadius: "50%",
-                backgroundColor: machine === selectedStart|| machine === selectedEnd ? "purple" : "blue",
+                backgroundColor: (machine.backgroundColor===null)? (machine === selectedStart|| machine === selectedEnd ? "purple" : "blue"):machine.backgroundColor,
                 color: "white",
                 display: "flex",
                 alignItems: "center",
