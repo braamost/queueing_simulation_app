@@ -6,7 +6,7 @@ public class Machine extends Observable implements Runnable {
     private final String id;
     private final Queue nextQueue;
     private Process currentProcess;
-    private boolean isIdle = true;
+    private volatile boolean isIdle = true;
     private Color color;
     private int runningTime;
 
@@ -26,7 +26,10 @@ public class Machine extends Observable implements Runnable {
     public String getId() {
         return id;
     }
-
+    public void stop() {
+        isIdle = false; // Stop the machine
+        Thread.currentThread().interrupt();
+    }
     public void assignProcess(Process process) {
         this.currentProcess = process;
         this.isIdle = false;

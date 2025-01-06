@@ -59,4 +59,10 @@ public class Queue implements Observer {
             assignProcessToMachine(); // Assign a process if the machine is idle
         }
     }
+
+
+    public void clearProcesses() {
+        processes.clear();
+    }
+
 }
