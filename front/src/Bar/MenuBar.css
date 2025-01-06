@@ -1,51 +1,65 @@
-/* Main container styles */
+/* Main container */
 .container {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100vh;
+  background-color: #868686;
+}
+body{
+  background-color: #d5d5d5;
 }
 
-/* Menu bar styles */
+/* Menu bar */
 .menuBar_container {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
-  background-color: #2c3e50;
+  justify-content: center;
+  margin: 40px 330px;
+  padding: 20px 30px;
+  background: linear-gradient(to right, #1c3c5c, #205c83);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
   z-index: 100;
+  width: fit-content;
+  height: fit-content;
+  gap: 10px;
 }
 
-/* Common button styles */
+/* Buttons */
 .button {
   padding: 10px 15px;
-  margin: 0 5px;
+  margin: 0 6px;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 60px;
-  min-height: 40px;
+  min-width: 100px;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #34495e;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .button:active {
   transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Specific button styles */
+/* Button variants */
 .button[title="Circle"] { background-color: #2ecc71; }
 .button[title="Square"] { background-color: #3498db; }
 .button[title="arrow"] { background-color: #e67e22; }
@@ -53,64 +67,76 @@
 .button[title="Start"] { background-color: #27ae60; }
 .button[title="Stop"] { background-color: #c0392b; }
 
-/* Products input section */
+/* Products section */
 .prod {
   display: flex;
   align-items: center;
-  margin-left: auto;
+  justify-content: center;
   gap: 15px;
+  background-color: rgba(255, 255, 255, 0.535);
+  padding: 10px 20px;
+  border-radius: 8px;
 }
 
+/* Input styling */
 .input {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .input label {
   color: white;
   font-size: 14px;
   font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .input input {
   padding: 8px 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
   color: white;
   font-size: 14px;
-  width: 180px;
+  width: 200px;
   transition: all 0.2s ease;
 }
 
 .input input:focus {
   outline: none;
   border-color: #3498db;
-  background-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  background-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 
 .input input::placeholder {
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* Draggable elements */
-.draggable-machine {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Add Products button */
+.prod button {
+  padding: 8px 16px;
+  margin-top: 20px;
+  background-color: #3498db;
   color: white;
-  cursor: move;
-  user-select: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.draggable-queue {
+.prod button:hover {
+  background-color: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Draggable elements */
+.draggable-machine, .draggable-queue {
   width: 60px;
   height: 60px;
   display: flex;
@@ -119,26 +145,33 @@
   color: white;
   cursor: move;
   user-select: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.draggable-machine {
+  border-radius: 50%;
 }
 
 .draggable-machine:hover,
 .draggable-queue:hover {
   transform: scale(1.05);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Error message styling */
+/* Error message */
 .error-message {
   color: #e74c3c;
   font-size: 12px;
-  margin-top: 4px;
   position: absolute;
   bottom: -20px;
   left: 0;
+  background-color: rgba(231, 76, 60, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
-/* SVG connection styles */
+/* SVG connections */
 svg line {
   stroke-dasharray: 5;
   animation: dash 20s linear reverse infinite;
@@ -147,5 +180,31 @@ svg line {
 @keyframes dash {
   to {
     stroke-dashoffset: 1000;
+  }
+}
+
+/* Loading states */
+.button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .menuBar_container {
+    flex-wrap: wrap;
+    padding: 8px 12px;
+  }
+  
+  .prod {
+    position: relative;
+    right: 0;
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+  .input input {
+    width: 100%;
   }
 }

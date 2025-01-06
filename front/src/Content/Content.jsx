@@ -1,5 +1,4 @@
 
-import "./Content.css";
 import MenuBar from "../Bar/MenuBar";
 
 
