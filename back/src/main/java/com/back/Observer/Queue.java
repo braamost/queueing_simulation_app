@@ -6,12 +6,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Queue implements Observer {
-    private final UUID id;
+    private final String id;
     private final BlockingQueue<Process> processes = new LinkedBlockingQueue<>();
     private final List<Machine> connectedMachines = new ArrayList<>();
+    private final Integer processCount;
 
-    public Queue(UUID id) {
+    public Queue(String id, Integer processCount) {
+        this.processCount = processCount;
         this.id = id;
+    }
+
+    public Integer getProcessCount() {
+        return processCount;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public List<Process> getProcesses() {
+        return new ArrayList<>(processes);
     }
 
     public void addProcess(Process process) {

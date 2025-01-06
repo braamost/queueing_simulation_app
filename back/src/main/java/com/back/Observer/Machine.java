@@ -1,23 +1,30 @@
 package com.back.Observer;
 import java.awt.Color;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 
 public class Machine extends Observable implements Runnable {
-    private final UUID id;
+    private final String id;
     private final Queue nextQueue;
     private Process currentProcess;
     private boolean isIdle = true;
     private Color color;
     private int runningTime;
 
-    public Machine(UUID id, Queue nextQueue) {
+    public Machine(String id, Queue nextQueue) {
         this.id = id;
         this.nextQueue = nextQueue;
     }
 
     public boolean isIdle() {
         return isIdle;
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public void assignProcess(Process process) {
@@ -35,7 +42,8 @@ public class Machine extends Observable implements Runnable {
             Thread.sleep(runningTime); // Simulate processing time
 
             // Send the processed task to the next queue
-            nextQueue.addProcess(currentProcess);
+            if(nextQueue != null) nextQueue.addProcess(currentProcess);
+            else System.out.println(currentProcess.getId() + " dropped");
             System.out.println(id + " finished processing " + currentProcess.getId());
 
             // Notify observers that the machine is idle
