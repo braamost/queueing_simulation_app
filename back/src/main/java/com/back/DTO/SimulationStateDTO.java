@@ -6,22 +6,13 @@ import java.util.Map;
 
 public class SimulationStateDTO {
     private Map<String, MachineStateDTO> machineStates = new HashMap<>();
-    private Map<String, QueueStateDTO> queueStates = new HashMap<>();
 
     public Map<String, MachineStateDTO> getMachineStates() {
         return machineStates;
     }
 
-    public Map<String, QueueStateDTO> getQueueStates() {
-        return queueStates;
-    }
-
     public void setMachineStates(Map<String, MachineStateDTO> machineStates) {
         this.machineStates = machineStates;
-    }
-
-    public void setQueueStates(Map<String, QueueStateDTO> queueStates) {
-        this.queueStates = queueStates;
     }
 
     public static class MachineStateDTO {
@@ -41,18 +32,5 @@ public class SimulationStateDTO {
         public void setRunningTime(int runningTime) { this.runningTime = runningTime; }
         public String getCurrentProcessId() { return currentProcessId; }
         public void setCurrentProcessId(String currentProcessId) { this.currentProcessId = currentProcessId; }
-    }
-
-    public static class QueueStateDTO {
-        private String id;
-        private int processCount;
-        private List<ProcessDTO> processes;
-
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
-        public int getProcessCount() { return processCount; }
-        public void setProcessCount(int processCount) { this.processCount = processCount; }
-        public List<ProcessDTO> getProcesses() { return processes; }
-        public void setProcesses(List<ProcessDTO> processes) { this.processes = processes; }
     }
 }

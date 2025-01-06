@@ -1,14 +1,9 @@
 package com.back.Observer;
 
-import com.back.Controllers.SimulationService;
-import com.back.DTO.ProcessDTO;
-import com.back.DTO.ColorDTO;
-import com.back.DTO.SimulationStateDTO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 public class Queue implements Observer {
     private final String id;
@@ -27,15 +22,8 @@ public class Queue implements Observer {
     }
 
     public void updateProcessCount(int newCount) {
-        int diff = newCount - processes.size();
-        if (diff > 0) {
-            for (int i = 0; i < diff; i++) {
-                addProcess(new Process());
-            }
-        } else if (diff < 0) {
-            for (int i = 0; i < Math.abs(diff) && !processes.isEmpty(); i++) {
-                processes.poll();
-            }
+        for (int i = 0; i < newCount ; i++) {
+            addProcess(new Process());
         }
     }
 
