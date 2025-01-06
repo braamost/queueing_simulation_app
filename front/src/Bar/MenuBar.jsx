@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./MenuBar.css";
 import Draggable from "react-draggable";
 import Buttons from "../Buttons/Buttons.jsx";
+import useWebSocket from "react-use-websocket";
+import { transformData } from "./TransformData.jsx";
 
-
+const WS_URL = "ws://localhost:8080/simulation"; // WebSocket server URL
 
 function MenuBar() {
   const [products, setProducts] = useState(0);
@@ -11,10 +13,27 @@ function MenuBar() {
     const [queues, setQueues] = useState([]);
     const [connections, setConnections] = useState([]);
     const [isConnectionMode, setIsConnectionMode] = useState(false);
-    const [isSimulating, setIsSimulating] = useState(false);
+    const [simulationStarted, setSimulationStarted] = useState(false);
     const [selectedObject, setSelectedObject] = useState(null); // ID of the selected object
     const [selectedStart, setSelectedStart] = useState(null); // ID of the start object
     const [selectedEnd, setSelectedEnd] = useState(null);     // ID of the end object
+    const [webMessage, setWebMessage] = useState(null);
+
+      // WebSocket hook
+  const { sendJsonMessage } = useWebSocket(WS_URL, {
+    onOpen: () => console.log("WebSocket connection established."),
+    onClose: () => console.log("WebSocket connection closed."),
+    onError: (error) => console.error("WebSocket error:", error),
+    onMessage: (event) => {
+      const message = JSON.parse(event.data);
+      console.log("Received message from server:", message);
+      setWebMessage(message);
+    },
+  });
+
+  useEffect(() => {
+    
+  }, [webMessage]);
 
   const addMachine = () => {
     const newMachine = {
@@ -152,12 +171,27 @@ function MenuBar() {
 
   // Function to start the simulation
   const startSim = () => {
-    setIsSimulating(true);
-    console.log("Simulation started...");
+    console.log("the connections: ", connections);
+    const initData = transformData(machines, queues, connections, products);
+    console.log(initData);
+
+    // Send the INIT_SIMULATION message
+    sendJsonMessage({
+      type: "INIT_SIMULATION",
+      data: initData,
+    });
+
+    setSimulationStarted(true);
+    console.log("Simulation started.");
   };
   const stop = () => {
-    setIsSimulating(false);
-    console.log("Simulation stopped...");
+    // Send the STOP_SIMULATION message
+    sendJsonMessage({
+      type: "STOP_SIMULATION",
+    });
+
+    setSimulationStarted(false);
+    console.log("Simulation stopped.");
   };
     return (
         <div>
