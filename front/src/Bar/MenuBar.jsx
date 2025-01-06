@@ -8,10 +8,11 @@ import { transformData } from "./TransformData.jsx";
 const WS_URL = "ws://localhost:8080/simulation"; // WebSocket server URL
 
 function MenuBar() {
-  const [products, setProducts] = useState(0);
+    const [products, setProducts] = useState(0);
     const [machines, setMachines] = useState([]);
     const [queues, setQueues] = useState([]);
     const [connections, setConnections] = useState([]);
+    const [startingId, setStartingId] = useState(null)
     const [isConnectionMode, setIsConnectionMode] = useState(false);
     const [simulationStarted, setSimulationStarted] = useState(false);
     const [selectedObject, setSelectedObject] = useState(null); // ID of the selected object
@@ -36,6 +37,7 @@ function MenuBar() {
   }, [webMessage]);
 
   const addMachine = () => {
+    if (simulationStarted) return ;
     const newMachine = {
       id: `M${machines.length + 1}`,
       type: "machine",
@@ -47,6 +49,7 @@ function MenuBar() {
   };
 
   const addQueue = () => {
+    if (simulationStarted) return ;
     const newQueue = {
       id: `Q${queues.length + 1}`,
       type: "queue",
@@ -57,6 +60,7 @@ function MenuBar() {
     setQueues([...queues, newQueue]);
   };
   const connect = () => {
+    if (simulationStarted) return ;
     if (selectedStart && selectedEnd) {
         if (selectedStart.id.startsWith("M")&&selectedEnd.id.startsWith("M")|| selectedStart.id.startsWith("Q")&&selectedEnd.id.startsWith("Q")){
             alert("Cannot connect two machines or two queues.");
@@ -99,6 +103,7 @@ function MenuBar() {
 
   // Function to delete the last added object
   const Delete = () => {
+    if (simulationStarted) return ;
     if (selectedEnd || selectedStart) {
         if (selectedStart && selectedEnd) {
             if (selectedStart.id.startsWith("M")||selectedEnd.id.startsWith("M")) {
@@ -165,12 +170,16 @@ function MenuBar() {
   };
 
   const replay = () => {
-    // Reset the simulation (for now, just log a message)
+    if (simulationStarted) return ;
     console.log("Replaying simulation...");
   };
 
   // Function to start the simulation
   const startSim = () => {
+    if (!selectedStart){
+      alert("Please select the starting object of simulation.");
+      return;
+    } 
     console.log("the connections: ", connections);
     const initData = transformData(machines, queues, connections, products);
     console.log(initData);
@@ -180,7 +189,8 @@ function MenuBar() {
       type: "INIT_SIMULATION",
       data: initData,
     });
-
+    setStartingId(selectedStart.id);
+    setSelectedStart(null);
     setSimulationStarted(true);
     console.log("Simulation started.");
   };
@@ -207,6 +217,8 @@ function MenuBar() {
         onStop={stop}
         products={products}
         setProducts={setProducts}
+        simulationStarted={simulationStarted}
+        startingId={startingId}
       />
       </div>
 
