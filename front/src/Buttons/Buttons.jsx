@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import useWebSocket from "react-use-websocket";
 import "./Buttons.css";
 
-const Buttons = ({ onAddMachine, onAddQueue, onConnect, onDelete, onReplay, onStartSim, onStop , products , setProducts  , simulationStarted , startingId}) => {
+const Buttons = ({ onAddMachine, onAddQueue, onConnect, onDelete, onReplay, onStartSim, onStop , products , setProducts  , simulationStarted , startingId , sendJsonMessage}) => {
   const addClick=()=>{
     const item = document.getElementById("products");
     if (item.value === "" || item.value <= 0) {
