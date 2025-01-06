@@ -19,36 +19,53 @@ function MenuBar() {
     const [selectedStart, setSelectedStart] = useState(null); // ID of the start object
     const [selectedEnd, setSelectedEnd] = useState(null);     // ID of the end object
     const [webMessage, setWebMessage] = useState(null);
+    const [shouldReconnect, setShouldReconnect] = useState(true);
 
       // WebSocket hook
-  const { sendJsonMessage } = useWebSocket(WS_URL, {
-    onOpen: () => console.log("WebSocket connection established."),
-    onClose: () => console.log("WebSocket connection closed."),
-    onError: (error) => console.error("WebSocket error:", error),
-    onMessage: (event) => {
-      const message = JSON.parse(event.data);
-      console.log("Received message from server:", message);
-      setWebMessage(message);
-    },
-  });
+      const { sendJsonMessage } = useWebSocket(WS_URL, {
+        onOpen: () => console.log("WebSocket connection established."),
+        onClose: () => {
+          console.log("WebSocket connection closed.");
+          if (shouldReconnect) {
+            console.log("Reopening WebSocket connection...");
+            setTimeout(() => {
+              setShouldReconnect(true); // Trigger reconnection
+            }, 1000); // 1-second delay before reopening
+          }
+        },
+        onError: (error) => console.error("WebSocket error:", error),
+        onMessage: (event) => {
+          const message = JSON.parse(event.data);
+          console.log("Received message from server:", message);
+          setWebMessage(message);
+        },
+        shouldReconnect: () => shouldReconnect, // Control reconnection behavior
+        reconnectAttempts: 10, // Maximum number of reconnection attempts
+        reconnectInterval: 1000, // Delay between reconnection attempts (1 second)
+      });
 
   useEffect(() => {
+    console.log("entered useEffect");
     if (webMessage) {
-      // Extract the machinesStates from the WebSocket message
-      const { machinesStates } = webMessage;
+      // Extract the machineStates from the WebSocket message
+      const machineStates = webMessage.machineStates; // Fix: Use the correct property name
+      console.log("machineStates:", machineStates);
   
-      // Iterate over the machinesStates to find the machine with the matching id
-      for (const machineKey in machinesStates) {
-        if (machinesStates.hasOwnProperty(machineKey)) {
-          const machineState = machinesStates[machineKey];
+      // Iterate over the machineStates to find the machine with the matching id
+      for (const machineKey in machineStates) {
+        console.log("MachineKey:", machineKey);
+        if (machineStates.hasOwnProperty(machineKey)) {
+          console.log("found machine:", machineKey);
+          const machineState = machineStates[machineKey];
+          console.log("MachineState:", machineState);
           const { id, color } = machineState;
-  
+          console.log("id:", id, " color:", color);
           // Find the machine with the matching id
           const machineIndex = machines.findIndex((machine) => machine.id === id);
   
           if (machineIndex !== -1) {
             // Extract the color values from the color object
-            const { blue, green, red } = color;
+            const { blue, green, red } = color === null ? { blue: 0, green: 0, red: 0 } : color;
   
             // Create a CSS color string (e.g., "rgb(124, 236, 110)")
             const backgroundColor = `rgb(${red}, ${green}, ${blue})`;

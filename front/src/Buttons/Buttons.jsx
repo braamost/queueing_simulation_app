@@ -27,7 +27,6 @@ const Buttons = ({ onAddMachine, onAddQueue, onConnect, onDelete, onReplay, onSt
       <button onClick={onAddQueue} title="Square" className="button">Q ⬛</button>
       <button onClick={onConnect} title="arrow" className="button">arrow ↗</button>
       <button onClick={onDelete} title="Delete" className="button">Delete</button>
-      <button onClick={onReplay} title="Replay" className="button">Replay</button>
       {(simulationStarted) ? <button onClick={onStop} title="Stop" className="button">Stop</button> :
       <button onClick={onStartSim} title="Start" className="button">Start</button>}
      
