@@ -1,6 +1,9 @@
 package com.back.Observer;
+
+import com.back.Controllers.SimulationService;
+import com.back.DTO.ColorDTO;
+import com.back.DTO.SimulationStateDTO;
 import java.awt.Color;
-import java.util.UUID;
 
 public class Machine extends Observable implements Runnable {
     private final String id;
@@ -9,53 +12,66 @@ public class Machine extends Observable implements Runnable {
     private volatile boolean isIdle = true;
     private Color color;
     private int runningTime;
+    private final SimulationService simulationService;
 
-    public Machine(String id, Queue nextQueue) {
+    public Machine(String id, Queue nextQueue, SimulationService simulationService) {
         this.id = id;
         this.nextQueue = nextQueue;
+        this.simulationService = simulationService;
     }
 
     public boolean isIdle() {
         return isIdle;
     }
 
-    public Color getColor() {
-        return color;
-    }
-
     public String getId() {
         return id;
     }
+
     public void stop() {
-        isIdle = false; // Stop the machine
+        isIdle = false;
         Thread.currentThread().interrupt();
     }
+
     public void assignProcess(Process process) {
         this.currentProcess = process;
         this.isIdle = false;
         this.color = process.getColor();
         this.runningTime = (int) (Math.random() * 5000) + 1000;
-        new Thread(this).start(); // Start processing
+
+        SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO();
+        state.setId(id);
+        state.setIdle(false);
+        state.setColor(new ColorDTO(color));
+        state.setRunningTime(runningTime);
+        state.setCurrentProcessId(process.getId().toString());
+
+        simulationService.updateMachineState(state);
+        new Thread(this).start();
     }
 
     @Override
     public void run() {
         try {
-            System.out.println(id + " processing " + currentProcess.getId());
-            Thread.sleep(runningTime); // Simulate processing time
+            Thread.sleep(runningTime);
 
-            // Send the processed task to the next queue
-            if(nextQueue != null) nextQueue.addProcess(currentProcess);
-            else System.out.println(currentProcess.getId() + " dropped");
-            System.out.println(id + " finished processing " + currentProcess.getId());
-
-            // Notify observers that the machine is idle
+            if (nextQueue != null) {
+                nextQueue.addProcess(currentProcess);
+            }
+            System.out.println("Machine " + id + " is done with process " + currentProcess.getId());
             isIdle = true;
+
+            SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO();
+            state.setId(id);
+            state.setIdle(true);
+            state.setColor(null);
+            state.setRunningTime(0);
+            state.setCurrentProcessId(null);
+
+            simulationService.updateMachineState(state);
             notifyObservers("Machine is idle");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println(id + " was interrupted.");
         }
     }
-
 }

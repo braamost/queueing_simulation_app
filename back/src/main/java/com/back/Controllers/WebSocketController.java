@@ -1,74 +1,170 @@
 package com.back.Controllers;
 
 import com.back.DTO.CanvasData;
+import com.back.DTO.SimulationStateDTO;
+import com.back.Configuration.SimulationStateEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class WebSocketController extends TextWebSocketHandler {
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketController.class);
+    private final ObjectMapper objectMapper;
+    private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
 
     private final SimulationService simulationService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Set<WebSocketSession> sessions = new HashSet<>(); // Track all connected sessions
 
     @Autowired
-    public WebSocketController(SimulationService simulationService) {
+    public WebSocketController(ObjectMapper objectMapper, SimulationService simulationService) {
+        this.objectMapper = objectMapper;
         this.simulationService = simulationService;
     }
 
-    @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        // Handle incoming WebSocket messages
-        String payload = message.getPayload();
-        System.out.println("!!!!! MESSAGE RECEIVED: " + payload);
+    @EventListener
+    public void handleSimulationStateEvent(SimulationStateEvent event) {
+        broadcastState(event.getState());
+    }
 
+    public void broadcastState(SimulationStateDTO state) {
         try {
-            // Parse the JSON payload into a CanvasData object
-            CanvasData canvasData = objectMapper.readValue(payload, CanvasData.class);
+            String jsonPayload = objectMapper.writeValueAsString(state);
+            TextMessage message = new TextMessage(jsonPayload);
 
-            // Initialize the simulation using the SimulationService
-            simulationService.initializeSimulation(canvasData);
-
-            // Broadcast the updated canvas data to all connected clients
-            broadcastCanvasData(canvasData);
-        } catch (Exception e) {
-            // Handle errors (e.g., invalid JSON payload)
-            System.err.println("Error processing WebSocket message: " + e.getMessage());
-            session.sendMessage(new TextMessage("Error: " + e.getMessage()));
+            sessions.forEach(session -> {
+                if (session.isOpen()) {
+                    try {
+                        session.sendMessage(message);
+                    } catch (IOException e) {
+                        logger.error("Error sending message to client {}: {}", session.getId(), e.getMessage());
+                        try {
+                            session.close(CloseStatus.SERVER_ERROR);
+                        } catch (IOException ex) {
+                            logger.error("Error closing WebSocket session: {}", ex.getMessage());
+                        }
+                        sessions.remove(session);
+                    }
+                }
+            });
+        } catch (IOException e) {
+            logger.error("Error serializing state to JSON: {}", e.getMessage());
         }
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        // Handle new WebSocket connection
-        System.out.println("!!!!! NEW CONNECTION ESTABLISHED: " + session.getId());
-        sessions.add(session); // Add the session to the set of connected sessions
+    public void afterConnectionEstablished(WebSocketSession session) {
+        logger.info("New WebSocket connection established: {}", session.getId());
+        sessions.add(session);
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, org.springframework.web.socket.CloseStatus status) throws Exception {
-        // Handle WebSocket connection closure
-        System.out.println("!!!!! CONNECTION CLOSED: " + session.getId());
-        sessions.remove(session); // Remove the session from the set of connected sessions
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        logger.info("WebSocket connection closed: {}", session.getId());
+        sessions.remove(session);
     }
 
-    // Broadcast canvas data to all connected clients
-    private void broadcastCanvasData(CanvasData canvasData) throws IOException {
-        String jsonPayload = objectMapper.writeValueAsString(canvasData);
-        TextMessage message = new TextMessage(jsonPayload);
+    @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        logger.error("WebSocket transport error: {}", exception.getMessage());
+        try {
+            session.close(CloseStatus.SERVER_ERROR);
+        } catch (IOException e) {
+            logger.error("Error closing WebSocket session: {}", e.getMessage());
+        }
+        sessions.remove(session);
+    }
 
-        for (WebSocketSession session : sessions) {
-            if (session.isOpen()) {
-                session.sendMessage(message);
+    @Override
+    public void handleTextMessage(WebSocketSession session, TextMessage message) {
+        try {
+            String payload = message.getPayload();
+            logger.debug("Received WebSocket message: {}", payload);
+            System.out.println("Received WebSocket message: " + payload);
+
+            JsonNode jsonNode = objectMapper.readTree(payload);
+
+            if (jsonNode.has("type")) {
+                String type = jsonNode.get("type").asText();
+
+                switch (type) {
+                    case "INIT_SIMULATION":
+                        handleInitSimulation(jsonNode);
+                        break;
+                    case "UPDATE_PROCESS_COUNT":
+                        handleUpdateProcessCount(jsonNode);
+                        break;
+                    case "STOP_SIMULATION":
+                        handleStopSimulation();
+                        break;
+                    default:
+                        logger.warn("Unknown message type received: {}", type);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error processing WebSocket message: {}", e.getMessage());
+            try {
+                session.sendMessage(new TextMessage("Error: " + e.getMessage()));
+            } catch (IOException ex) {
+                logger.error("Error sending error message to client: {}", ex.getMessage());
             }
         }
+    }
+
+    private void handleInitSimulation(JsonNode jsonNode) throws Exception {
+        // Parse the CanvasData from the message
+        CanvasData canvasData = objectMapper.treeToValue(jsonNode.get("data"), CanvasData.class);
+
+        // Initialize the simulation using the SimulationService
+        simulationService.initializeSimulation(canvasData);
+
+        // Log the initialization
+        logger.info("Simulation initialized with data: {}", canvasData);
+    }
+
+    private void handleUpdateProcessCount(JsonNode jsonNode) {
+        // Extract queueId and newCount from the message
+        String queueId = jsonNode.get("queueId").asText();
+        int newCount = jsonNode.get("count").asInt();
+
+        // Update the process count using the SimulationService
+        simulationService.updateQueueProcessCount(queueId, newCount);
+
+        // Log the update
+        logger.info("Updated process count for queue {} to {}", queueId, newCount);
+    }
+
+    private void handleStopSimulation() {
+        // Stop the simulation using the SimulationService
+        simulationService.stopSimulation();
+
+        // Close all WebSocket sessions
+        closeAllSessions();
+
+        // Log the stop action
+        logger.info("Simulation stopped and all WebSocket sessions closed");
+    }
+    private void closeAllSessions() {
+        sessions.forEach(session -> {
+            if (session.isOpen()) {
+                try {
+                    session.close(CloseStatus.NORMAL);
+                } catch (IOException e) {
+                    logger.error("Error closing WebSocket session {}: {}", session.getId(), e.getMessage());
+                }
+            }
+        });
+        sessions.clear(); // Clear the list of active sessions
     }
 }

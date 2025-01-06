@@ -1,6 +1,6 @@
 package com.back.Observer;
+
 import java.awt.Color;
-import java.util.UUID;
 
 public class Process {
     private static Integer idCounter = 0;

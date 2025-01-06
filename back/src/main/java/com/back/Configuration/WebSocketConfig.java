@@ -1,8 +1,11 @@
 package com.back.Configuration;
 
 import com.back.Controllers.WebSocketController;
+import com.back.Controllers.SimulationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
@@ -11,16 +14,23 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final WebSocketController webSocketController;
+    private final SimulationService simulationService;
+    private final ObjectMapper objectMapper;
 
-    public WebSocketConfig(WebSocketController webSocketController) {
-        this.webSocketController = webSocketController;
+    @Autowired
+    public WebSocketConfig(SimulationService simulationService, ObjectMapper objectMapper) {
+        this.simulationService = simulationService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        // Register the WebSocket handler and specify the endpoint
-        registry.addHandler((WebSocketHandler) webSocketController, "/ws")
-                .setAllowedOrigins("*"); // Allow all origins (adjust as needed)
+        registry.addHandler(webSocketController(), "/simulation")
+                .setAllowedOrigins("*");
+    }
+
+    @Bean
+    public WebSocketController webSocketController() {
+        return new WebSocketController(objectMapper, simulationService);
     }
 }
