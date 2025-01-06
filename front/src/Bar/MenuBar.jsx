@@ -88,6 +88,20 @@ function MenuBar() {
       }
     }
   }, [webMessage]);
+  useEffect(() => {
+    console.log("entered useEffect for checking all machines");
+    // Check if all machines are black
+    const allMachinesAreBlack = machines.every((machine) => {
+      return machine.backgroundColor === "rgb(0, 0, 0)"; // Check if the color is black
+    });
+  
+    // If all machines are black, set simulationStarted to false
+    if (allMachinesAreBlack) {
+      setSimulationStarted(false);
+      console.log("All machines are black. Simulation stopped.");
+    }
+  }, [machines]); // This effect runs only when `machines` changes
+  
 
   const addMachine = () => {
     if (simulationStarted) return;
