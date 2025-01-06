@@ -6,6 +6,7 @@ import Buttons from "../Buttons/Buttons.jsx";
 
 
 function MenuBar() {
+  const [products, setProducts] = useState(0);
     const [machines, setMachines] = useState([]);
     const [queues, setQueues] = useState([]);
     const [connections, setConnections] = useState([]);
@@ -57,7 +58,7 @@ function MenuBar() {
         to: selectedEnd.id,
       };
       selectedStart.connect++;
-      selectedEnd.connect++;
+      
       setConnections([...connections, newConnection]);
       setSelectedStart(null); // Reset selection
       setSelectedEnd(null);   // Reset selection
@@ -94,16 +95,12 @@ function MenuBar() {
                 )
               );
               if (selectedStart.id.startsWith("Q")) {
-                const connectedMachine = machines.find((machine) => machine.connect > 0 && connections.some((conn) => conn.from === machine.id && conn.to === selectedStart.id));
-                if (connectedMachine) {
-                  connectedMachine.connect--;
-                }
+                const connectedMachines = machines.filter((machine) => machine.connect > 0 && connections.some((conn) => conn.from === machine.id && conn.to === selectedStart.id));
+                connectedMachines.forEach((machine) => machine.connect--);
               }
               if (selectedEnd.id.startsWith("Q")) {
-                const connectedMachine = machines.find((machine) => machine.connect > 0 && connections.some((conn) => conn.from === machine.id && conn.to === selectedEnd.id));
-                if (connectedMachine) {
-                  connectedMachine.connect--;
-                }
+                const connectedMachines = machines.filter((machine) => machine.connect > 0 && connections.some((conn) => conn.from === machine.id && conn.to === selectedEnd.id));
+                connectedMachines.forEach((machine) => machine.connect--);
               }
 
         }
@@ -113,10 +110,8 @@ function MenuBar() {
               }
               if (selectedStart.id.startsWith("Q")) {
                 setQueues(queues.filter((queue) => queue.id !== selectedStart.id));
-                const connectedMachine = machines.find((machine) => machine.connect > 0 && connections.some((conn) => conn.from === machine.id && conn.to === selectedStart.id));
-          if (connectedMachine) {
-            connectedMachine.connect--;
-          }
+                const connectedMachines = machines.filter((machine) => machine.connect > 0 && connections.some((conn) => conn.from === machine.id && conn.to === selectedStart.id));
+                connectedMachines.forEach((machine) => machine.connect--);
               }
               setConnections((prevConnections) =>
                 prevConnections.filter(
@@ -131,10 +126,8 @@ function MenuBar() {
               }
               if (selectedEnd.id.startsWith("Q")) {
                 setQueues(queues.filter((queue) => queue.id !== selectedEnd.id));
-                const connectedMachine = machines.find((machine) => machine.connect > 0 && connections.some((conn) => conn.from === machine.id && conn.to === selectedEnd.id));
-                if (connectedMachine) {
-                    connectedMachine.connect--;
-                }
+                const connectedMachines = machines.filter((machine) => machine.connect > 0 && connections.some((conn) => conn.from === machine.id && conn.to === selectedEnd.id));
+                connectedMachines.forEach((machine) => machine.connect--);
               }
               setConnections((prevConnections) =>
                 prevConnections.filter(
@@ -178,6 +171,8 @@ function MenuBar() {
         onReplay={replay}
         onStartSim={startSim}
         onStop={stop}
+        products={products}
+        setProducts={setProducts}
       />
       </div>
 

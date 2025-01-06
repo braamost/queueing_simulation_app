@@ -159,25 +159,6 @@ const Content = () => {
   return (
     <div className="relative w-full min-h-screen">
       <MenuBar/>
-      <QueueRender
-        queues={queues}
-        isConnectionMode={isConnectionMode}
-        positions={positions}
-        setPositions={setPositions}
-        onClick={selectShape}
-      />
-
-      <MachineRender
-        machines={machines}
-        isConnectionMode={isConnectionMode}
-        positions={positions}
-        setPositions={setPositions}
-        onClick={selectShape}
-      />
-
-      {connections.map((arrow) => (
-        <ConnectionLine key={arrow.id} arrow={arrow} positions={positions} />
-      ))}
     </div>
   );
 };

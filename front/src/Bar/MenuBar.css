@@ -28,6 +28,7 @@
     min-height: 50px;
     cursor: pointer;
     background-color:rgb(255, 255, 255);
+    transition: background-color 0.3s ease; /* Smooth transition */
     font-size: 20px;
   }
   
