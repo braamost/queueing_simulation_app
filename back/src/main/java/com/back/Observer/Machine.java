@@ -56,7 +56,9 @@ public class Machine extends Observable implements Runnable {
             Thread.sleep(runningTime);
 
             if (nextQueue != null) {
+                System.out.println(nextQueue.getId());
                 nextQueue.addProcess(currentProcess);
+                nextQueue.assignProcessesToMachines();
             }
             System.out.println("Machine " + id + " is done with process " + currentProcess.getId());
             isIdle = true;
@@ -69,7 +71,7 @@ public class Machine extends Observable implements Runnable {
             state.setCurrentProcessId(null);
 
             simulationService.updateMachineState(state);
-            notifyObservers("Machine is idle");
+            notifyObservers(id);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

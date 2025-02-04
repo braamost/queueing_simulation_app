@@ -65,6 +65,7 @@ public class SimulationService {
             for (int i = 0; i < nProcesses; i++) {
                 queue.addProcess(new Process());
             }
+            queue.assignProcessesToMachines();
         }
     }
 

@@ -52,7 +52,7 @@ public class WebSocketController extends TextWebSocketHandler {
                         try {
                             session.close(CloseStatus.SERVER_ERROR);
                         } catch (IOException ex) {
-                            logger.error("Error closing WebSocket session: {}", ex.getMessage());
+                            logger.error("Error closing WebSocket session : {}", ex.getMessage());
                         }
                         sessions.remove(session);
                     }
@@ -159,7 +159,7 @@ public class WebSocketController extends TextWebSocketHandler {
         sessions.forEach(session -> {
             if (session.isOpen()) {
                 try {
-                    session.close(CloseStatus.NORMAL);
+                    session.close(CloseStatus.SERVICE_RESTARTED);
                 } catch (IOException e) {
                     logger.error("Error closing WebSocket session {}: {}", session.getId(), e.getMessage());
                 }

@@ -29,6 +29,7 @@ const Buttons = ({
           queueId: startingId,
           count: products,
         });
+        setProducts(0);
       }
     }
   };

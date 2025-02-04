@@ -293,12 +293,13 @@ function MenuBar() {
 
   // Function to start the simulation
   const startSim = () => {
-    if (!selectedStart) {
-      alert("Please select the starting object of simulation.");
+    if (!selectedStart || !selectedStart.id.startsWith("Q")) {
+      alert("Please select the starting Queue of simulation.");
       return;
     }
     console.log("the connections: ", connections);
-    const initData = transformData(machines, queues, connections, products);
+    const initData = transformData(machines, queues, connections, products, selectedStart.id);
+    setProducts(0);
     console.log(initData);
 
     // Send the INIT_SIMULATION message

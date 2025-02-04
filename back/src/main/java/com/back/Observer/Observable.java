@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Observable {
-    private final List<Observer> observers = new ArrayList<>();
+    protected final List<Observer> observers = new ArrayList<>();
 
     public void addObserver(Observer observer) {
         observers.add(observer);
@@ -14,9 +14,9 @@ public class Observable {
         observers.remove(observer);
     }
 
-    protected void notifyObservers(String message) {
+    protected void notifyObservers(String id) {
         for (Observer observer : observers) {
-            observer.update(message);
+            observer.update("Machine is idle", id);
         }
     }
 }

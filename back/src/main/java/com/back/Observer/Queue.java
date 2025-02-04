@@ -1,15 +1,15 @@
 package com.back.Observer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Queue implements Observer {
     private final String id;
     private final BlockingQueue<Process> processes = new LinkedBlockingQueue<>();
-    private final List<Machine> connectedMachines = new ArrayList<>();
-    private final Integer processCount;
+    private final Map<String, Machine> connectedMachines = new HashMap<>();
+    private Integer processCount;
 
     public Queue(String id, Integer processCount) {
         this.id = id;
@@ -18,13 +18,29 @@ public class Queue implements Observer {
 
     public void addProcess(Process process) {
         processes.add(process);
-        assignProcessToMachine();
+        processCount++;
+        // update new process count in simulationService
+    }
+
+    public Process removeProcess() {
+        if(processes.isEmpty()) return null;
+        Process process = processes.poll();
+        processCount--;
+        // update new process count in simulationService
+        return process;
+    }
+
+    public void clearProcesses() {
+        processes.clear();
+        processCount = 0;
+        // update new process count in simulationService
     }
 
     public void updateProcessCount(int newCount) {
         for (int i = 0; i < newCount ; i++) {
             addProcess(new Process());
         }
+        assignProcessesToMachines();
     }
 
     public Integer getProcessCount() {
@@ -36,32 +52,30 @@ public class Queue implements Observer {
     }
 
     public void connectMachine(Machine machine) {
-        connectedMachines.add(machine);
+        connectedMachines.put(machine.getId(), machine);
         machine.addObserver(this);
     }
 
-    private void assignProcessToMachine() {
-        for (Machine machine : connectedMachines) {
-            if (machine.isIdle() && !processes.isEmpty()) {
-                try {
-                    Process process = processes.take();
-                    machine.assignProcess(process);
+    public void assignProcessesToMachines() {
+        for(int i = 0; i < processCount; i++) {
+            for (Machine machine : connectedMachines.values()) {
+                if(machine.isIdle()) {
+                    Process process = removeProcess();
+                    if(process != null) machine.assignProcess(process);
                     break;
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
                 }
             }
         }
     }
 
     @Override
-    public void update(String message) {
+    public synchronized void update(String message, String machineId) {
         if (message.equals("Machine is idle")) {
-            assignProcessToMachine();
+            if(!processes.isEmpty()) {
+                Machine machine = connectedMachines.get(machineId);
+                Process process = removeProcess();
+                if(process != null) machine.assignProcess(process);
+            }
         }
-    }
-
-    public void clearProcesses() {
-        processes.clear();
     }
 }
