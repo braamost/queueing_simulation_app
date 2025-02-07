@@ -39,12 +39,13 @@ public class Machine extends Observable implements Runnable {
         this.color = process.getColor();
         this.runningTime = (int) (Math.random() * 5000) + 1000;
 
-        SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO();
-        state.setId(id);
-        state.setIdle(false);
-        state.setColor(new ColorDTO(color));
-        state.setRunningTime(runningTime);
-        state.setCurrentProcessId(process.getId().toString());
+        SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO(
+                id,
+                false,
+                new ColorDTO(color),
+                runningTime,
+                process.getId().toString()
+        );
 
         simulationService.updateMachineState(state);
         new Thread(this).start();
@@ -63,13 +64,13 @@ public class Machine extends Observable implements Runnable {
             System.out.println("Machine " + id + " is done with process " + currentProcess.getId());
             isIdle = true;
 
-            SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO();
-            state.setId(id);
-            state.setIdle(true);
-            state.setColor(null);
-            state.setRunningTime(0);
-            state.setCurrentProcessId(null);
-
+            SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO(
+                    id,
+                    true,
+                    null,
+                    0,
+                    null
+            );
             simulationService.updateMachineState(state);
             notifyObservers(id);
         } catch (InterruptedException e) {

@@ -45,26 +45,22 @@ function MenuBar() {
   });
 
   useEffect(() => {
-    console.log("entered useEffect");
     if (webMessage) {
       // Extract the machineStates from the WebSocket message
-      const machineStates = webMessage.machineStates; // Fix: Use the correct property name
-      console.log("machineStates:", machineStates);
+      const machineStates = webMessage.machineStates; 
+      const queueStates = webMessage.queueStates;
 
       // Iterate over the machineStates to find the machine with the matching id
       for (const machineKey in machineStates) {
-        console.log("MachineKey:", machineKey);
         if (machineStates.hasOwnProperty(machineKey)) {
-          console.log("found machine:", machineKey);
+
           const machineState = machineStates[machineKey];
-          console.log("MachineState:", machineState);
           const { id, color } = machineState;
-          console.log("id:", id, " color:", color);
+
           // Find the machine with the matching id
           const machineIndex = machines.findIndex(
             (machine) => machine.id === id
           );
-
           if (machineIndex !== -1) {
             // Extract the color values from the color object
             const { blue, green, red } =
@@ -86,6 +82,25 @@ function MenuBar() {
           }
         }
       }
+
+      // // Iterate over the queueStates to find the queue with the matching id
+      // for (const queueKey in queueStates) {
+      //   if (queueStates.hasOwnProperty(queueKey)) {
+      //     const queueState = queueStates[queueKey];
+      //     const { id, processCount } = queueState;
+      //     const queueIndex = queues.findIndex((queue) => queue.id === id);
+      //     if (queueIndex !== -1) {
+      //       // change number of processes on queue here y mon
+      //       setQueues((prevQueues) =>
+      //         prevQueues.map((queue, index) =>
+      //           index === queueIndex
+      //             ? { ...queue } // w hna y mon
+      //             : queue
+      //         )
+      //       );
+      //     }
+      //   }
+      // }
     }
   }, [webMessage]);
   useEffect(() => {
@@ -98,6 +113,7 @@ function MenuBar() {
     // If all machines are black, set simulationStarted to false
     if (allMachinesAreBlack) {
       setSimulationStarted(false);
+      sendJsonMessage({ type: "STOP_SIMULATION" });
       console.log("All machines are black. Simulation stopped.");
     }
   }, [machines]); // This effect runs only when `machines` changes
@@ -297,7 +313,6 @@ function MenuBar() {
       alert("Please select the starting Queue of simulation.");
       return;
     }
-    console.log("the connections: ", connections);
     const initData = transformData(machines, queues, connections, products, selectedStart.id);
     setProducts(0);
     console.log(initData);

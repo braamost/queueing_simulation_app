@@ -1,5 +1,8 @@
 package com.back.Observer;
 
+import com.back.Controllers.SimulationService;
+import com.back.DTO.SimulationStateDTO;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -9,17 +12,21 @@ public class Queue implements Observer {
     private final String id;
     private final BlockingQueue<Process> processes = new LinkedBlockingQueue<>();
     private final Map<String, Machine> connectedMachines = new HashMap<>();
+    private final SimulationService simulationService;
     private Integer processCount;
 
-    public Queue(String id, Integer processCount) {
+    public Queue(String id, Integer processCount, SimulationService simulationService) {
         this.id = id;
         this.processCount = processCount;
+        this.simulationService = simulationService ;
     }
 
     public void addProcess(Process process) {
         processes.add(process);
         processCount++;
         // update new process count in simulationService
+        SimulationStateDTO.QueueStateDTO state = new SimulationStateDTO.QueueStateDTO(id, processCount);
+        simulationService.updateQueueState(state);
     }
 
     public Process removeProcess() {
@@ -27,6 +34,8 @@ public class Queue implements Observer {
         Process process = processes.poll();
         processCount--;
         // update new process count in simulationService
+        SimulationStateDTO.QueueStateDTO state = new SimulationStateDTO.QueueStateDTO(id, processCount);
+        simulationService.updateQueueState(state);
         return process;
     }
 
@@ -34,6 +43,8 @@ public class Queue implements Observer {
         processes.clear();
         processCount = 0;
         // update new process count in simulationService
+        SimulationStateDTO.QueueStateDTO state = new SimulationStateDTO.QueueStateDTO(id, processCount);
+        simulationService.updateQueueState(state);
     }
 
     public void updateProcessCount(int newCount) {
@@ -78,4 +89,6 @@ public class Queue implements Observer {
             }
         }
     }
+
+    public void setProcessCount(int processCount) { this.processCount = processCount; }
 }

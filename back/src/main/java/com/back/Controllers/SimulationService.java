@@ -28,13 +28,19 @@ public class SimulationService {
         eventPublisher.publishEvent(new SimulationStateEvent(this, simulationState));
     }
 
+    public void updateQueueState(SimulationStateDTO.QueueStateDTO state) {
+        SimulationStateDTO simulationState = new SimulationStateDTO();
+        simulationState.getQueueStates().put(state.getId(), state);
+        eventPublisher.publishEvent(new SimulationStateEvent(this, simulationState));
+    }
+
     public void initializeSimulation(CanvasData canvasData) {
         queues.clear();
         machines.clear();
 
         // Create queues first
         for (QueueDTO queueDTO : canvasData.getQueues()) {
-            Queue queue = new Queue(queueDTO.getId(), queueDTO.getNProcesses());
+            Queue queue = new Queue(queueDTO.getId(), queueDTO.getNProcesses(), this);
             queues.put(queueDTO.getId(), queue);
         }
 
@@ -62,6 +68,7 @@ public class SimulationService {
         // Initialize processes in queues
         for (Queue queue : queues.values()) {
             int nProcesses = queue.getProcessCount();
+            queue.setProcessCount(0);
             for (int i = 0; i < nProcesses; i++) {
                 queue.addProcess(new Process());
             }
