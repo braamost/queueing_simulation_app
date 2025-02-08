@@ -3,6 +3,7 @@ package com.back.Controllers;
 import com.back.DTO.CanvasData;
 import com.back.DTO.SimulationStateDTO;
 import com.back.Configuration.SimulationStateEvent;
+import com.back.Observer.Process;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,6 +137,7 @@ public class WebSocketController extends TextWebSocketHandler {
     private void handleUpdateProcessCount(JsonNode jsonNode) {
         // Extract queueId and newCount from the message
         String queueId = jsonNode.get("queueId").asText();
+
         int newCount = jsonNode.get("count").asInt();
 
         // Update the process count using the SimulationService
@@ -148,6 +150,7 @@ public class WebSocketController extends TextWebSocketHandler {
     private void handleStopSimulation() {
         // Stop the simulation using the SimulationService
         simulationService.stopSimulation();
+        Process.setIdCounter(0);
 
         // Close all WebSocket sessions
         closeAllSessions();

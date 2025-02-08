@@ -64,16 +64,6 @@ public class SimulationService {
                 }
             }
         }
-
-        // Initialize processes in queues
-        for (Queue queue : queues.values()) {
-            int nProcesses = queue.getProcessCount();
-            queue.setProcessCount(0);
-            for (int i = 0; i < nProcesses; i++) {
-                queue.addProcess(new Process());
-            }
-            queue.assignProcessesToMachines();
-        }
     }
 
     public void updateQueueProcessCount(String queueId, int newCount) {

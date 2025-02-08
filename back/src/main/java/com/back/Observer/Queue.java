@@ -24,33 +24,32 @@ public class Queue implements Observer {
     public void addProcess(Process process) {
         processes.add(process);
         processCount++;
-        // update new process count in simulationService
-        SimulationStateDTO.QueueStateDTO state = new SimulationStateDTO.QueueStateDTO(id, processCount);
-        simulationService.updateQueueState(state);
     }
 
     public Process removeProcess() {
         if(processes.isEmpty()) return null;
         Process process = processes.poll();
         processCount--;
+        return process;
+    }
+
+    public void notifyServer() {
         // update new process count in simulationService
         SimulationStateDTO.QueueStateDTO state = new SimulationStateDTO.QueueStateDTO(id, processCount);
         simulationService.updateQueueState(state);
-        return process;
     }
 
     public void clearProcesses() {
         processes.clear();
         processCount = 0;
-        // update new process count in simulationService
-        SimulationStateDTO.QueueStateDTO state = new SimulationStateDTO.QueueStateDTO(id, processCount);
-        simulationService.updateQueueState(state);
+        notifyServer();
     }
 
     public void updateProcessCount(int newCount) {
         for (int i = 0; i < newCount ; i++) {
             addProcess(new Process());
         }
+        notifyServer();
         assignProcessesToMachines();
     }
 
@@ -77,6 +76,7 @@ public class Queue implements Observer {
                 }
             }
         }
+        notifyServer();
     }
 
     @Override
@@ -87,6 +87,7 @@ public class Queue implements Observer {
                 Process process = removeProcess();
                 if(process != null) machine.assignProcess(process);
             }
+            notifyServer();
         }
     }
 

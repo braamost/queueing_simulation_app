@@ -1,4 +1,4 @@
-export const transformData = (machines, queues, connections, products, startId) => {
+export const transformData = (machines, queues, connections) => {
     // Step 1: Create a map of queue IDs to their connected machine IDs
     const queueToMachinesMap = new Map();
   
@@ -18,7 +18,7 @@ export const transformData = (machines, queues, connections, products, startId) 
     // Step 2: Create the queues array
     const transformedQueues = queues.map((queue) => ({
       id: queue.id,
-      nProcesses: queue.id === startId ? products : 0, // starting number of processes
+      nProcesses: 0, // starting number of processes
       machineIds: queueToMachinesMap.get(queue.id) || [], // Get connected machines
     }));
   

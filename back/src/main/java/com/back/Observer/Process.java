@@ -23,4 +23,8 @@ public class Process {
     public Color getColor() {
         return color;
     }
+
+    public static void setIdCounter(Integer idCounter) {
+        Process.idCounter = idCounter;
+    }
 }
