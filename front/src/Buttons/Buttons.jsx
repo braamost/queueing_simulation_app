@@ -35,10 +35,10 @@ const Buttons = ({
   };
   return (
     <>
-      <button onClick={onAddMachine} title="Circle" className="button">
+      <button onClick={onAddMachine} title="Machine" className="button">
         M ⚫
       </button>
-      <button onClick={onAddQueue} title="Square" className="button">
+      <button onClick={onAddQueue} title="Queue" className="button">
         Q ⬛
       </button>
       <button onClick={onConnect} title="arrow" className="button">
@@ -57,7 +57,7 @@ const Buttons = ({
         </button>
       )}
 
-      <div className="prod">
+      {simulationStarted && (<div className="prod">
         <div className="input">
           <label htmlFor="products">Number Of Products</label>
           <input
@@ -79,7 +79,7 @@ const Buttons = ({
         <button onClick={addClick} title="Add Products" className="button">
           Add Products
         </button>
-      </div>
+      </div>)}
     </>
   );
 };

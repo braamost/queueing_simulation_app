@@ -45,7 +45,9 @@ function MenuBar() {
   });
 
   useEffect(() => {
+    console.log("main useEffect");
     if (webMessage) {
+      console.log("main useEffect accepts webMessage");
       // Extract the machineStates from the WebSocket message
       const machineStates = webMessage.machineStates; 
       const queueStates = webMessage.queueStates;
@@ -75,7 +77,7 @@ function MenuBar() {
             setMachines((prevMachines) =>
               prevMachines.map((machine, index) =>
                 index === machineIndex
-                  ? { ...machine, backgroundColor } // Update the background color
+                  ? { ...machine, backgroundColor:backgroundColor } // Update the background color
                   : machine
               )
             );
@@ -83,24 +85,32 @@ function MenuBar() {
         }
       }
 
-      // // Iterate over the queueStates to find the queue with the matching id
-      // for (const queueKey in queueStates) {
-      //   if (queueStates.hasOwnProperty(queueKey)) {
-      //     const queueState = queueStates[queueKey];
-      //     const { id, processCount } = queueState;
-      //     const queueIndex = queues.findIndex((queue) => queue.id === id);
-      //     if (queueIndex !== -1) {
-      //       // change number of processes on queue here y mon
-      //       setQueues((prevQueues) =>
-      //         prevQueues.map((queue, index) =>
-      //           index === queueIndex
-      //             ? { ...queue } // w hna y mon
-      //             : queue
-      //         )
-      //       );
-      //     }
-      //   }
-      // }
+      // Iterate over the queueStates to find the queue with the matching id
+      for (const queueKey in queueStates) {
+        if (queueStates.hasOwnProperty(queueKey)) {
+          const queueState = queueStates[queueKey];
+          const { id, processCount } = queueState;
+          const queueIndex = queues.findIndex((queue) => queue.id === id);
+          if (queueIndex !== -1) {
+            console.log("queue found at index:", queueIndex);
+            console.log("Process COunter is :- "+ processCount )
+            console.log("Extracted id:", id);
+            console.log (queueState.id);
+            setQueues((prevQueues) => {
+            const updatedQueues = [...prevQueues]; 
+            // Find the queue index in the copied array
+            const queueIndex = updatedQueues.findIndex((queue) => queue.id === id);
+              // Update the queue processes count
+              updatedQueues[queueIndex] = { 
+                ...updatedQueues[queueIndex], 
+                processes: processCount 
+             };
+  
+            return updatedQueues;
+          });
+          }
+        }
+      }
     }
   }, [webMessage]);
   useEffect(() => {
@@ -140,6 +150,7 @@ function MenuBar() {
       connect: 0,
       x: 50 + 75 * queues.length,
       y: 150,
+      processes: 0,
     };
     setQueues([...queues, newQueue]);
   };
@@ -429,7 +440,8 @@ function MenuBar() {
               }}
               onClick={() => handleObjectClick(queue)}
             >
-              {queue.id}
+              {`${queue.id}: ${queue.processes || 0}`}
+              
             </div>
           </Draggable>
         ))}
