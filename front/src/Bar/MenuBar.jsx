@@ -16,7 +16,7 @@ const DraggableMachine = ({ machine, onDragStop, onClick, isSelected }) => (
     <div
       className={`draggable-machine ${isSelected ? 'selected' : ''}`}
       style={{
-        backgroundColor: machine.backgroundColor || (isSelected ? "purple" : "blue")
+        backgroundColor: machine.backgroundColor || (isSelected ? "purple" : "rgba(143, 143, 143, 0.6)"),
       }}
       onClick={() => onClick(machine)}
     >
@@ -34,7 +34,7 @@ const DraggableQueue = ({ queue, onDragStop, onClick, isSelected }) => (
     <div
       className={`draggable-queue ${isSelected ? 'selected' : ''}`}
       style={{
-        backgroundColor: isSelected ? "purple" : "green"
+        backgroundColor: isSelected ? "purple" : "rgba(0, 141, 184, 0.96)",
       }}
       onClick={() => onClick(queue)}
     >
@@ -91,6 +91,7 @@ function MenuBar() {
   const [selectedStart, setSelectedStart] = useState(null);
   const [selectedEnd, setSelectedEnd] = useState(null);
   const [shouldReconnect, setShouldReconnect] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Message queue management
   const messageQueueRef = useRef([]);
@@ -106,10 +107,10 @@ function MenuBar() {
         Object.entries(machineStates).forEach(([_, { id, color }]) => {
           const machineIndex = newMachines.findIndex(m => m.id === id);
           if (machineIndex !== -1) {
-            const { red = 0, green = 0, blue = 0 } = color || {};
+            const { red = 143, green = 143, blue = 143 } = color || {};
             newMachines[machineIndex] = {
               ...newMachines[machineIndex],
-              backgroundColor: `rgb(${red}, ${green}, ${blue})`
+              backgroundColor: `rgba(${red}, ${green}, ${blue}, ${0.6})`,
             };
           }
         });
@@ -141,7 +142,7 @@ function MenuBar() {
     while (messageQueueRef.current.length > 0) {
       const message = messageQueueRef.current.shift();
       await processMessage(message);
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // await new Promise(resolve => setTimeout(resolve, 0));
     }
 
     isProcessingRef.current = false;
@@ -274,6 +275,15 @@ function MenuBar() {
     setSimulationStarted(false);
   };
 
+  const handlePause = () => {
+    sendJsonMessage({ type: "PAUSE_SIMULATION" });
+    setIsPaused(true);
+  }
+  const handleResume = () => {
+    sendJsonMessage({ type: "RESUME_SIMULATION" });
+    setIsPaused(false);
+  }
+
   const handleObjectClick = (object) => {
     if (!selectedStart) {
       setSelectedStart(object);
@@ -305,6 +315,9 @@ function MenuBar() {
           startingId={selectedStart}
           setStartingId={setSelectedStart}
           sendJsonMessage={sendJsonMessage}
+          onPause={handlePause}
+          onResume={handleResume}
+          isPaused={isPaused}
         />
       </div>
 

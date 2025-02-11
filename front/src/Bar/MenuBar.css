@@ -129,6 +129,16 @@
   color: white;
 }
 
+.button.pause { 
+  background-color: var(--stop-color);
+  color: white;
+}
+
+.button.resume { 
+  background-color: var(--start-color);
+  color: white;
+}
+
 /* Product input styles */
 .prod {
   background: var(--surface-light);
@@ -214,6 +224,7 @@
 .draggable-machine.selected,
 .draggable-queue.selected {
   box-shadow: 0 0 0 3px var(--surface-light), 0 0 0 6px var(--queue-color);
+  background-color: rgb(81, 0, 128);
 }
 
 /* Connections styles */
@@ -235,7 +246,7 @@
   stroke: var(--connection-light);
   stroke-width: 3;
   stroke-dasharray: 5;
-  animation: flowLine 30s linear infinite;
+  animation: flowLine 30s linear infinite reverse;
   transition: stroke 0.3s ease;
 }
 

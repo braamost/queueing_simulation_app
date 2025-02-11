@@ -3,6 +3,8 @@ package com.back.Observer;
 import com.back.Controllers.SimulationService;
 import com.back.DTO.ColorDTO;
 import com.back.DTO.SimulationStateDTO;
+import com.back.Singleton.PausingMechanism;
+
 import java.awt.Color;
 
 public class Machine extends Observable implements Runnable {
@@ -13,6 +15,8 @@ public class Machine extends Observable implements Runnable {
     private Color color;
     private int runningTime;
     private final SimulationService simulationService;
+    private PausingMechanism pausingMechanism = PausingMechanism.getInstance();
+    private volatile boolean running = true;
 
     public Machine(String id, Queue nextQueue, SimulationService simulationService) {
         this.id = id;
@@ -28,8 +32,21 @@ public class Machine extends Observable implements Runnable {
         return id;
     }
 
-    public void stop() {
-        isIdle = false;
+    public synchronized void stop() {
+        this.isIdle = true;
+        this.color = null;
+        this.currentProcess = null;
+        this.runningTime = 0;
+
+        SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO(
+                id,
+                true,
+                null,
+                0,
+                null
+        );
+        simulationService.updateMachineState(state);
+
         Thread.currentThread().interrupt();
     }
 
@@ -39,22 +56,33 @@ public class Machine extends Observable implements Runnable {
         this.color = process.getColor();
         this.runningTime = (int) (Math.random() * 5000) + 1000;
 
-        SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO(
-                id,
-                false,
-                new ColorDTO(color),
-                runningTime,
-                process.getId().toString()
-        );
-
-        simulationService.updateMachineState(state);
         new Thread(this).start();
     }
 
     @Override
     public void run() {
         try {
-            Thread.sleep(runningTime);
+            if(!running) return;
+            pausingMechanism.checkPaused();
+
+            SimulationStateDTO.MachineStateDTO state1 = new SimulationStateDTO.MachineStateDTO(
+                    id,
+                    false,
+                    new ColorDTO(color),
+                    runningTime,
+                    currentProcess.getId().toString()
+            );
+
+            simulationService.updateMachineState(state1);
+
+            // Simulate work with periodic pause checks
+            long startTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - startTime < runningTime) {
+                pausingMechanism.checkPaused(); // Check pause state periodically
+                Thread.sleep(100); // Sleep in small increments
+            }
+
+            pausingMechanism.checkPaused();
 
             if (nextQueue != null) {
                 System.out.println(nextQueue.getId());

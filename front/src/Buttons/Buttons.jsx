@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 
 const Button = ({ onClick, title, children, disabled }) => (
   <button 
@@ -56,6 +56,9 @@ const Buttons = ({
   startingId,
   setStartingId,
   sendJsonMessage,
+  onPause,
+  onResume,
+  isPaused
 }) => {
   const handleAddProducts = () => {
     const productCount = parseInt(products);
@@ -111,6 +114,17 @@ const Buttons = ({
             <span className="button-icon">⏹</span>
             <span className="button-text">Stop</span>
           </Button>
+          {!isPaused?
+            <Button onClick={onPause} title="pause">
+              <span className="button-icon">⏸</span>
+              <span className="button-text">pause</span>
+            </Button>
+          :
+            <Button onClick={onResume} title="resume">
+              <span className="button-icon">▶</span>
+              <span className="button-text">resume</span>
+            </Button>
+          }
           <ProductInput
             products={products}
             setProducts={setProducts}

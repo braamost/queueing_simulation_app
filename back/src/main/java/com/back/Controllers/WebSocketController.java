@@ -109,6 +109,12 @@ public class WebSocketController extends TextWebSocketHandler {
                     case "STOP_SIMULATION":
                         handleStopSimulation();
                         break;
+                    case "PAUSE_SIMULATION":
+                        pauseSimulation();
+                        break;
+                    case "RESUME_SIMULATION":
+                        resumeSimulation();
+                        break;
                     default:
                         logger.warn("Unknown message type received: {}", type);
                 }
@@ -152,12 +158,18 @@ public class WebSocketController extends TextWebSocketHandler {
         simulationService.stopSimulation();
         Process.setIdCounter(0);
 
-        // Close all WebSocket sessions
-        closeAllSessions();
-
         // Log the stop action
         logger.info("Simulation stopped and all WebSocket sessions closed");
     }
+
+    private void pauseSimulation() {
+        simulationService.pauseSimulation();
+    }
+
+    private void resumeSimulation() {
+        simulationService.resumeSimulation();
+    }
+
     private void closeAllSessions() {
         sessions.forEach(session -> {
             if (session.isOpen()) {
@@ -170,4 +182,5 @@ public class WebSocketController extends TextWebSocketHandler {
         });
         sessions.clear(); // Clear the list of active sessions
     }
+
 }
