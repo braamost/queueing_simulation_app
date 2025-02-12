@@ -75,7 +75,7 @@ public class SimulationService {
         }
     }
 
-    public void stopSimulation() {
+    public synchronized void stopSimulation() {
         // Stop all machines
         for (Machine machine : machines.values()) {
             machine.stop();

@@ -15,7 +15,7 @@ public class Machine extends Observable implements Runnable {
     private Color color;
     private int runningTime;
     private final SimulationService simulationService;
-    private PausingMechanism pausingMechanism = PausingMechanism.getInstance();
+    private final PausingMechanism pausingMechanism = PausingMechanism.getInstance();
     private volatile boolean running = true;
 
     public Machine(String id, Queue nextQueue, SimulationService simulationService) {
@@ -32,12 +32,11 @@ public class Machine extends Observable implements Runnable {
         return id;
     }
 
-    public synchronized void stop() {
+    private synchronized void IdleMachine() {
         this.isIdle = true;
         this.color = null;
         this.currentProcess = null;
         this.runningTime = 0;
-
         SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO(
                 id,
                 true,
@@ -46,6 +45,12 @@ public class Machine extends Observable implements Runnable {
                 null
         );
         simulationService.updateMachineState(state);
+    }
+
+    public synchronized void stop() {
+        this.running = false;
+
+        IdleMachine();
 
         Thread.currentThread().interrupt();
     }
@@ -62,15 +67,15 @@ public class Machine extends Observable implements Runnable {
     @Override
     public void run() {
         try {
-            if(!running) return;
             pausingMechanism.checkPaused();
-
+            if(!running) return;
+            this.isIdle = false;
             SimulationStateDTO.MachineStateDTO state1 = new SimulationStateDTO.MachineStateDTO(
-                    id,
+                    this.id,
                     false,
-                    new ColorDTO(color),
-                    runningTime,
-                    currentProcess.getId().toString()
+                    new ColorDTO(this.color),
+                    this.runningTime,
+                    this.currentProcess.getId().toString()
             );
 
             simulationService.updateMachineState(state1);
@@ -79,27 +84,20 @@ public class Machine extends Observable implements Runnable {
             long startTime = System.currentTimeMillis();
             while (System.currentTimeMillis() - startTime < runningTime) {
                 pausingMechanism.checkPaused(); // Check pause state periodically
+                if(!running) return;
                 Thread.sleep(100); // Sleep in small increments
             }
 
             pausingMechanism.checkPaused();
+            if(!running) return;
 
             if (nextQueue != null) {
-                System.out.println(nextQueue.getId());
                 nextQueue.addProcess(currentProcess);
                 nextQueue.assignProcessesToMachines();
             }
             System.out.println("Machine " + id + " is done with process " + currentProcess.getId());
-            isIdle = true;
 
-            SimulationStateDTO.MachineStateDTO state = new SimulationStateDTO.MachineStateDTO(
-                    id,
-                    true,
-                    null,
-                    0,
-                    null
-            );
-            simulationService.updateMachineState(state);
+            IdleMachine();
             notifyObservers(id);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

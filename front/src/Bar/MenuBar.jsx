@@ -141,8 +141,11 @@ function MenuBar() {
 
     while (messageQueueRef.current.length > 0) {
       const message = messageQueueRef.current.shift();
-      await processMessage(message);
-      // await new Promise(resolve => setTimeout(resolve, 0));
+      try {
+        await processMessage(message);
+      } catch (error) {
+        console.error("Error processing message:", error);
+      }
     }
 
     isProcessingRef.current = false;
@@ -270,9 +273,28 @@ function MenuBar() {
     setSimulationStarted(true);
   };
 
-  const handleStop = () => {
-    sendJsonMessage({ type: "STOP_SIMULATION" });
-    setSimulationStarted(false);
+  const handleStop = async () => {
+    // First notify backend to stop simulation
+    await sendJsonMessage({ type: "STOP_SIMULATION" });
+    
+    // Clear message queue to prevent processing stale messages
+    messageQueueRef.current = [];
+    isProcessingRef.current = false;
+    
+    // Reset local state after a small delay to ensure backend has processed the stop
+    setTimeout(() => {
+      setMachines(machines => machines.map(machine => ({
+        ...machine,
+        backgroundColor: `rgba(143, 143, 143, 0.6)`, // Reset to idle color
+      })));
+      
+      setQueues(queues => queues.map(queue => ({
+        ...queue,
+        processes: 0
+      })));
+      
+      setSimulationStarted(false);
+    }, 100);
   };
 
   const handlePause = () => {

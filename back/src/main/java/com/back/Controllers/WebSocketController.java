@@ -44,19 +44,22 @@ public class WebSocketController extends TextWebSocketHandler {
             String jsonPayload = objectMapper.writeValueAsString(state);
             TextMessage message = new TextMessage(jsonPayload);
 
-            sessions.forEach(session -> {
-                if (session.isOpen()) {
+            sessions.removeIf(session -> {
+                if (session != null && session.isOpen()) {
                     try {
                         session.sendMessage(message);
+                        return false; // Keep the session in the set
                     } catch (IOException e) {
                         logger.error("Error sending message to client {}: {}", session.getId(), e.getMessage());
                         try {
                             session.close(CloseStatus.SERVER_ERROR);
                         } catch (IOException ex) {
-                            logger.error("Error closing WebSocket session : {}", ex.getMessage());
+                            logger.error("Error closing WebSocket session: {}", ex.getMessage());
                         }
-                        sessions.remove(session);
+                        return true; // Remove the session from the set
                     }
+                } else {
+                    return true; // Remove the session from the set
                 }
             });
         } catch (IOException e) {
@@ -156,7 +159,11 @@ public class WebSocketController extends TextWebSocketHandler {
     private void handleStopSimulation() {
         // Stop the simulation using the SimulationService
         simulationService.stopSimulation();
+
         Process.setIdCounter(0);
+
+        // Close all WebSocket sessions
+        closeAllSessions();
 
         // Log the stop action
         logger.info("Simulation stopped and all WebSocket sessions closed");
@@ -171,7 +178,7 @@ public class WebSocketController extends TextWebSocketHandler {
     }
 
     private void closeAllSessions() {
-        sessions.forEach(session -> {
+        sessions.removeIf(session -> {
             if (session.isOpen()) {
                 try {
                     session.close(CloseStatus.SERVICE_RESTARTED);
@@ -179,8 +186,8 @@ public class WebSocketController extends TextWebSocketHandler {
                     logger.error("Error closing WebSocket session {}: {}", session.getId(), e.getMessage());
                 }
             }
+            return true; // Remove the session from the set
         });
-        sessions.clear(); // Clear the list of active sessions
     }
 
 }

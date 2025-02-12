@@ -33,13 +33,13 @@ public class Queue implements Observer {
         return process;
     }
 
-    public void notifyServer() {
+    public synchronized void notifyServer() {
         // update new process count in simulationService
         SimulationStateDTO.QueueStateDTO state = new SimulationStateDTO.QueueStateDTO(id, processCount);
         simulationService.updateQueueState(state);
     }
 
-    public void clearProcesses() {
+    public synchronized void clearProcesses() {
         processes.clear();
         processCount = 0;
         notifyServer();
