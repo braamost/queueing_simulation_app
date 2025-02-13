@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import Draggable from "react-draggable";
 import useWebSocket from "react-use-websocket";
 import Buttons from "../Buttons/Buttons";
@@ -16,9 +16,10 @@ const DraggableMachine = ({ machine, onDragStop, onClick, isSelected }) => (
     <div
       className={`draggable-machine ${isSelected ? 'selected' : ''}`}
       style={{
-        backgroundColor: machine.backgroundColor || (isSelected ? "purple" : "rgba(143, 143, 143, 0.6)"),
+        backgroundColor: machine.backgroundColor || (isSelected ? "purple" : "rgba(115, 230, 8, 0.9)"),
       }}
       onClick={() => onClick(machine)}
+      data-id={machine.id}
     >
       {machine.id}
     </div>
@@ -37,6 +38,7 @@ const DraggableQueue = ({ queue, onDragStop, onClick, isSelected }) => (
         backgroundColor: isSelected ? "purple" : "rgba(0, 141, 184, 0.96)",
       }}
       onClick={() => onClick(queue)}
+      data-id={queue.id}
     >
       {`${queue.id}: ${queue.processes || 0}`}
     </div>
@@ -93,6 +95,8 @@ function MenuBar() {
   const [shouldReconnect, setShouldReconnect] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [replayMode, setReplayMode] = useState(false);
+  const [nextMachineId, setNextMachineId] = useState(1); // Start from 1
+  const [nextQueueId, setNextQueueId] = useState(1); // Start from 1
 
   // Message queue management
   const messageQueueRef = useRef([]);
@@ -108,10 +112,10 @@ function MenuBar() {
         Object.entries(machineStates).forEach(([_, { id, color }]) => {
           const machineIndex = newMachines.findIndex(m => m.id === id);
           if (machineIndex !== -1) {
-            const { red = 143, green = 143, blue = 143 } = color || {};
+            const { red = 115, green = 230, blue = 8 } = color || {};
             newMachines[machineIndex] = {
               ...newMachines[machineIndex],
-              backgroundColor: `rgba(${red}, ${green}, ${blue}, ${0.6})`,
+              backgroundColor: `rgba(${red}, ${green}, ${blue}, ${0.9})`,
             };
           }
         });
@@ -180,7 +184,7 @@ function MenuBar() {
   const handleAddMachine = () => {
     if (simulationStarted) return;
     const newMachine = {
-      id: `M${machines.length + 1}`,
+      id: `M${nextMachineId}`,
       type: "machine",
       connect: 0,
       backgroundColor: null,
@@ -188,12 +192,13 @@ function MenuBar() {
       y: 50,
     };
     setMachines([...machines, newMachine]);
+    setNextMachineId(nextMachineId + 1);
   };
 
   const handleAddQueue = () => {
     if (simulationStarted) return;
     const newQueue = {
-      id: `Q${queues.length + 1}`,
+      id: `Q${nextQueueId}`,
       type: "queue",
       connect: 0,
       x: 50 + 75 * queues.length,
@@ -201,6 +206,7 @@ function MenuBar() {
       processes: 0,
     };
     setQueues([...queues, newQueue]);
+    setNextQueueId(nextQueueId + 1);
   };
 
   const handleConnect = () => {
@@ -234,38 +240,48 @@ function MenuBar() {
   };
 
   const handleDelete = () => {
-    if (simulationStarted || (!selectedEnd && !selectedStart)) return;
+    if (simulationStarted) return;
 
+    // If no object is selected, show a message
+    if (!selectedStart && !selectedEnd) {
+      alert("Please select an object to delete.");
+      return;
+    }
+
+    // Confirm deletion
+    const confirmDelete = window.confirm("Are you sure you want to delete the selected object(s)?");
+    if (!confirmDelete) return;
+
+    // Add deletion animation
     const objectsToDelete = [selectedStart, selectedEnd].filter(Boolean);
-    const objectIds = objectsToDelete.map(obj => obj.id);
-
-    setMachines(prevMachines => 
-      prevMachines.filter(machine => !objectIds.includes(machine.id))
-    );
-
-    setQueues(prevQueues => 
-      prevQueues.filter(queue => !objectIds.includes(queue.id))
-    );
-
-    setConnections(prevConnections => 
-      prevConnections.filter(conn => 
-        !objectIds.includes(conn.from) && !objectIds.includes(conn.to)
-      )
-    );
-
-    // Update machine connections
     objectsToDelete.forEach(obj => {
-      if (obj?.id.startsWith("Q")) {
-        machines.forEach(machine => {
-          if (connections.some(conn => 
-            conn.from === machine.id && conn.to === obj.id
-          )) {
-            machine.connect--;
-          }
-        });
+      const element = document.querySelector(`.draggable-${obj.id.startsWith("M") ? "machine" : "queue"}[data-id="${obj.id}"]`);
+      if (element) {
+        element.classList.add("deleting");
       }
     });
 
+    // Wait for the animation to complete before deleting
+    setTimeout(() => {
+      const objectIds = objectsToDelete.map(obj => obj.id);
+      setMachines(prev => prev.filter(m => !objectIds.includes(m.id)));
+      setQueues(prev => prev.filter(q => !objectIds.includes(q.id)));
+      setConnections(prev => prev.filter(conn => 
+        !objectIds.includes(conn.from) && !objectIds.includes(conn.to)
+      ));
+      resetSelection();
+    }, 300); // Match the animation duration
+  };
+
+  const handleClearAll = () => {
+    const confirmClear = window.confirm("Are you sure you want to clear everything?");
+    if (!confirmClear) return;
+
+    setMachines([]);
+    setQueues([]);
+    setConnections([]);
+    setNextMachineId(1);
+    setNextQueueId(1);
     resetSelection();
   };
 
@@ -279,25 +295,18 @@ function MenuBar() {
   };
 
   const handleStop = async () => {
-    // First notify backend to stop simulation
     await sendJsonMessage({ type: "STOP_SIMULATION" });
-    
-    // Clear message queue to prevent processing stale messages
     messageQueueRef.current = [];
     isProcessingRef.current = false;
-    
-    // Reset local state after a small delay to ensure backend has processed the stop
     setTimeout(() => {
       setMachines(machines => machines.map(machine => ({
         ...machine,
-        backgroundColor: `rgba(143, 143, 143, 0.6)`, // Reset to idle color
+        backgroundColor: `rgba(255, 230, 0, 0.6)`,
       })));
-      
       setQueues(queues => queues.map(queue => ({
         ...queue,
         processes: 0
       })));
-      
       setSimulationStarted(false);
     }, 100);
   };
@@ -305,21 +314,22 @@ function MenuBar() {
   const handlePause = () => {
     sendJsonMessage({ type: "PAUSE_SIMULATION" });
     setIsPaused(true);
-  }
+  };
+
   const handleResume = () => {
     sendJsonMessage({ type: "RESUME_SIMULATION" });
     setIsPaused(false);
-  }
+  };
 
   const handleReplay = () => {
-    if(replayMode) {
+    if (replayMode) {
       sendJsonMessage({ type: "END_REPLAY" });
       setReplayMode(false);
-    }else{
+    } else {
       sendJsonMessage({ type: "REPLAY_SIMULATION" });
       setReplayMode(true);
     }
-  }
+  };
 
   const handleObjectClick = (object) => {
     if (!selectedStart) {
@@ -336,6 +346,20 @@ function MenuBar() {
     setSelectedEnd(null);
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Delete") {
+        handleDelete();
+      } else if (e.key === "Escape") {
+        resetSelection();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleDelete, resetSelection]);
+
   return (
     <div className="menubar">
       <div className="menubar-buttons">
@@ -344,6 +368,7 @@ function MenuBar() {
           onAddQueue={handleAddQueue}
           onConnect={handleConnect}
           onDelete={handleDelete}
+          onClearAll={handleClearAll}
           onStartSim={handleStartSim}
           onStop={handleStop}
           products={products}
@@ -357,11 +382,10 @@ function MenuBar() {
           isPaused={isPaused}
           onReplay={handleReplay}
           replayMode={replayMode}
-          setReplayMode={setReplayMode}
         />
       </div>
 
-      <div className="simulation-container">
+      <div className={`simulation-container ${replayMode ? "replay-mode" : ""}`}>
         {machines.map(machine => (
           <DraggableMachine
             key={machine.id}

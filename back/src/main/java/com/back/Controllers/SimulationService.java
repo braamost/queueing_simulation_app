@@ -11,8 +11,11 @@ import com.back.SnapShot.SimulationMemento;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+
+import java.sql.Time;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
 
 @Service
 public class SimulationService {
@@ -34,27 +37,6 @@ public class SimulationService {
         history.add(new SimulationMemento(currentState));
     }
 
-    public void restoreState() {
-        SimulationMemento memento = history.get();
-        if(memento != null) {
-            currentState = memento.getState();
-            eventPublisher.publishEvent(new SimulationStateEvent(this, currentState));
-            int r = 0;
-            for(SimulationStateDTO.MachineStateDTO m : currentState.getMachineStates().values()) {
-                r = m.getRunningTime();
-                try {
-                    Thread.sleep(r);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }else {
-            //end replay
-            SimulationStateDTO state = new SimulationStateDTO();
-            state.setType("endReplay");
-            eventPublisher.publishEvent(new SimulationStateEvent(this, state));
-        }
-    }
 
     public SimulationStateDTO getCurrentState() {
         return currentState;
@@ -65,16 +47,18 @@ public class SimulationService {
     }
 
     public synchronized void updateMachineState(SimulationStateDTO.MachineStateDTO state) {
-        SimulationStateDTO simulationState = new SimulationStateDTO();
+        SimulationStateDTO simulationState = getCurrentState();
         simulationState.getMachineStates().put(state.getId(), state);
+        simulationState.setCurrentTime(System.currentTimeMillis());
         setCurrentState(simulationState);
         saveState();
         eventPublisher.publishEvent(new SimulationStateEvent(this, simulationState));
     }
 
     public synchronized void updateQueueState(SimulationStateDTO.QueueStateDTO state) {
-        SimulationStateDTO simulationState = new SimulationStateDTO();
+        SimulationStateDTO simulationState = getCurrentState();
         simulationState.getQueueStates().put(state.getId(), state);
+        simulationState.setCurrentTime(System.currentTimeMillis());
         setCurrentState(simulationState);
         saveState();
         eventPublisher.publishEvent(new SimulationStateEvent(this, simulationState));
@@ -119,6 +103,7 @@ public class SimulationService {
         }
 
         // save initial state to history
+        initialState.setCurrentTime(System.currentTimeMillis());
         setCurrentState(initialState);
         saveState();
     }
@@ -151,8 +136,43 @@ public class SimulationService {
     public void replaySimulation() {
         int size = history.size();
         replaying = true;
+        // initial state
+        SimulationMemento prev = history.get();
+        eventPublisher.publishEvent(new SimulationStateEvent(this, prev.getState()));
+
+    // replay
+        // get first state
+        prev = history.get();
+        long startTime = prev.getState().getCurrentTime();
+        // loop through history
+        long endTime = 0;
         while (size >= 0 && replaying){
-            restoreState();
+            SimulationMemento memento = history.get();
+            if(memento != null) {
+                // replay the state
+                currentState = memento.getState();
+                endTime = currentState.getCurrentTime();
+                eventPublisher.publishEvent(new SimulationStateEvent(this, prev.getState()));
+
+                // sleep till next state
+                try{
+                    Thread.sleep((endTime - startTime));
+                }catch (Exception e) {
+                    System.out.println("help");
+                }
+
+                // move to next state
+                startTime = endTime;
+                prev = memento;
+            }else {
+                // replay last state
+                eventPublisher.publishEvent(new SimulationStateEvent(this, prev.getState()));
+
+                //end replay
+                SimulationStateDTO state = new SimulationStateDTO();
+                state.setType("endReplay");
+                eventPublisher.publishEvent(new SimulationStateEvent(this, state));
+            }
             size--;
         }
     }

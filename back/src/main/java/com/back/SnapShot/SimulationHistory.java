@@ -20,6 +20,8 @@ public class SimulationHistory {
         SimulationStateDTO stateCopy = new SimulationStateDTO();
         stateCopy.setMachineStates(new HashMap<>(memento.getState().getMachineStates()));
         stateCopy.setQueueStates(new HashMap<>(memento.getState().getQueueStates()));
+        stateCopy.setCurrentTime(memento.getState().getCurrentTime());
+        stateCopy.setType(memento.getState().getType());
         history.add(new SimulationMemento(stateCopy));
     }
 

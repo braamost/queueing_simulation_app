@@ -8,6 +8,7 @@ public class SimulationStateDTO {
     private Map<String, MachineStateDTO> machineStates = new HashMap<>();
     private Map<String, QueueStateDTO> queueStates = new HashMap<>();
     private String type;
+    private long currentTime;
 
     public SimulationStateDTO() {
     }
@@ -33,6 +34,14 @@ public class SimulationStateDTO {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public long getCurrentTime() {
+        return currentTime;
+    }
+
+    public void setCurrentTime(long currentTime) {
+        this.currentTime = currentTime;
     }
 
     public static class MachineStateDTO {

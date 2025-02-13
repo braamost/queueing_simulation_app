@@ -1,3 +1,4 @@
+import React from "react";
 
 const Button = ({ onClick, title, children, disabled }) => (
   <button 
@@ -47,6 +48,7 @@ const Buttons = ({
   onAddQueue,
   onConnect,
   onDelete,
+  onClearAll,
   onStartSim,
   onStop,
   products,
@@ -101,8 +103,12 @@ const Buttons = ({
             <span className="button-text">Connect</span>
           </Button>
           <Button onClick={onDelete} title="Delete">
-            <span className="button-icon">🗑</span>
+            <span className="button-icon">🗑️</span>
             <span className="button-text">Delete</span>
+          </Button>
+          <Button onClick={onClearAll} title="Clear All">
+            <span className="button-icon">🗑️</span>
+            <span className="button-text">Clear All</span>
           </Button>
           <Button onClick={onStartSim} title="Start">
             <span className="button-icon">▶</span>
@@ -115,28 +121,28 @@ const Buttons = ({
             <span className="button-icon">⏹</span>
             <span className="button-text">Stop</span>
           </Button>
-          {!isPaused?
-            <Button onClick={onPause} title="pause">
+          {!isPaused ? (
+            <Button onClick={onPause} title="Pause">
               <span className="button-icon">⏸</span>
-              <span className="button-text">pause</span>
+              <span className="button-text">Pause</span>
             </Button>
-          :
-            <Button onClick={onResume} title="resume">
+          ) : (
+            <Button onClick={onResume} title="Resume">
               <span className="button-icon">▶</span>
-              <span className="button-text">resume</span>
+              <span className="button-text">Resume</span>
             </Button>
-          }
-          {!replayMode?
+          )}
+          {!replayMode ? (
             <Button onClick={onReplay} title="Replay" disabled={!isPaused}>
               <span className="button-icon">🔄</span>
               <span className="button-text">Replay</span>
             </Button>
-          :
-            <Button onClick={onReplay} title="exitReplay" disabled={!isPaused}>
+          ) : (
+            <Button onClick={onReplay} title="Exit Replay" disabled={!isPaused}>
               <span className="button-icon">🔄</span>
-              <span className="button-text">exit Replay</span>
+              <span className="button-text">Exit Replay</span>
             </Button>
-          }
+          )}
           <ProductInput
             products={products}
             setProducts={setProducts}
