@@ -7,6 +7,10 @@ import java.util.Map;
 public class SimulationStateDTO {
     private Map<String, MachineStateDTO> machineStates = new HashMap<>();
     private Map<String, QueueStateDTO> queueStates = new HashMap<>();
+    private String type;
+
+    public SimulationStateDTO() {
+    }
 
     public Map<String, MachineStateDTO> getMachineStates() {
         return machineStates;
@@ -15,12 +19,20 @@ public class SimulationStateDTO {
         return queueStates;
     }
 
+    public String getType() {
+        return type;
+    }
+
     public void setMachineStates(Map<String, MachineStateDTO> machineStates) {
         this.machineStates = machineStates;
     }
 
     public void setQueueStates(Map<String, QueueStateDTO> queueStates) {
         this.queueStates = queueStates;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public static class MachineStateDTO {

@@ -118,6 +118,11 @@ public class WebSocketController extends TextWebSocketHandler {
                     case "RESUME_SIMULATION":
                         resumeSimulation();
                         break;
+                    case "REPLAY_SIMULATION":
+                        handleReplaySimulation();
+                        break;
+                    case "END_REPLAY":
+                        handleEndReplay();
                     default:
                         logger.warn("Unknown message type received: {}", type);
                 }
@@ -130,6 +135,14 @@ public class WebSocketController extends TextWebSocketHandler {
                 logger.error("Error sending error message to client: {}", ex.getMessage());
             }
         }
+    }
+
+    private void handleReplaySimulation() {
+        simulationService.replaySimulation();
+    }
+
+    private void handleEndReplay() {
+        simulationService.handleEndReplay();
     }
 
     private void handleInitSimulation(JsonNode jsonNode) throws Exception {

@@ -92,6 +92,7 @@ function MenuBar() {
   const [selectedEnd, setSelectedEnd] = useState(null);
   const [shouldReconnect, setShouldReconnect] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [replayMode, setReplayMode] = useState(false);
 
   // Message queue management
   const messageQueueRef = useRef([]);
@@ -163,6 +164,10 @@ function MenuBar() {
     onError: (error) => console.error("WebSocket error:", error),
     onMessage: (event) => {
       const message = JSON.parse(event.data);
+      if (message.type === "endReplay") {
+        setReplayMode(false);
+        return;
+      }
       messageQueueRef.current.push(message);
       processMessageQueue();
     },
@@ -306,6 +311,16 @@ function MenuBar() {
     setIsPaused(false);
   }
 
+  const handleReplay = () => {
+    if(replayMode) {
+      sendJsonMessage({ type: "END_REPLAY" });
+      setReplayMode(false);
+    }else{
+      sendJsonMessage({ type: "REPLAY_SIMULATION" });
+      setReplayMode(true);
+    }
+  }
+
   const handleObjectClick = (object) => {
     if (!selectedStart) {
       setSelectedStart(object);
@@ -340,6 +355,9 @@ function MenuBar() {
           onPause={handlePause}
           onResume={handleResume}
           isPaused={isPaused}
+          onReplay={handleReplay}
+          replayMode={replayMode}
+          setReplayMode={setReplayMode}
         />
       </div>
 

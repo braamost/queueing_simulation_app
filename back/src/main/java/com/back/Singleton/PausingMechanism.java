@@ -12,8 +12,9 @@ public class PausingMechanism {
     public static PausingMechanism getInstance(){
         if(pausingMechanism == null)
             synchronized (PausingMechanism.class) {
-                if(pausingMechanism == null)
+                if(pausingMechanism == null){
                     pausingMechanism = new PausingMechanism();
+                }
             }
         return pausingMechanism;
     }

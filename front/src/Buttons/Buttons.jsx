@@ -10,7 +10,7 @@ const Button = ({ onClick, title, children, disabled }) => (
   </button>
 );
 
-const ProductInput = ({ products, setProducts, onAdd, startingId, simulationStarted }) => {
+const ProductInput = ({ products, setProducts, onAdd, startingId, simulationStarted, isPaused }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onAdd();
@@ -32,7 +32,7 @@ const ProductInput = ({ products, setProducts, onAdd, startingId, simulationStar
           <Button 
             onClick={onAdd} 
             title="Add Products"
-            disabled={!startingId || !simulationStarted}
+            disabled={!startingId || !simulationStarted || isPaused}
           >
             Add Products
           </Button>
@@ -57,7 +57,9 @@ const Buttons = ({
   sendJsonMessage,
   onPause,
   onResume,
-  isPaused
+  isPaused,
+  onReplay,
+  replayMode
 }) => {
   const handleAddProducts = () => {
     const productCount = parseInt(products);
@@ -124,12 +126,24 @@ const Buttons = ({
               <span className="button-text">resume</span>
             </Button>
           }
+          {!replayMode?
+            <Button onClick={onReplay} title="Replay" disabled={!isPaused}>
+              <span className="button-icon">🔄</span>
+              <span className="button-text">Replay</span>
+            </Button>
+          :
+            <Button onClick={onReplay} title="exitReplay" disabled={!isPaused}>
+              <span className="button-icon">🔄</span>
+              <span className="button-text">exit Replay</span>
+            </Button>
+          }
           <ProductInput
             products={products}
             setProducts={setProducts}
             onAdd={handleAddProducts}
             startingId={startingId}
             simulationStarted={simulationStarted}
+            isPaused={isPaused}
           />
         </div>
       )}

@@ -23,7 +23,8 @@
   --arrow-color: #e67e22;
   --delete-color: #e74c3c;
   --start-color: #27ae60;
-  --stop-color: #c0392b;
+  --stop-color: #c02b50;
+  --pause-color: #f1c40f;
 }
 
 /* Main container */
@@ -130,12 +131,20 @@
 }
 
 .button.pause { 
-  background-color: var(--stop-color);
+  background-color: var(--pause-color);
   color: white;
 }
 
 .button.resume { 
   background-color: var(--start-color);
+  color: white;
+}
+.button.replay { 
+  background-color: var(--queue-color);
+  color: white;
+}
+.button.exitreplay { 
+  background-color: var(--arrow-color);
   color: white;
 }
 
