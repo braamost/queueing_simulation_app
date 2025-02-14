@@ -8,8 +8,6 @@ import org.springframework.context.annotation.ComponentScan;
 public class BackApplication {
 
 	public static void main(String[] args) {
-		System.out.println("app to run");
 		SpringApplication.run(BackApplication.class, args);
-		System.out.println("app running");
 	}
 }

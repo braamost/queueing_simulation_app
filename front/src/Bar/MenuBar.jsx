@@ -16,7 +16,7 @@ const DraggableMachine = ({ machine, onDragStop, onClick, isSelected }) => (
     <div
       className={`draggable-machine ${isSelected ? 'selected' : ''}`}
       style={{
-        backgroundColor: machine.backgroundColor || (isSelected ? "purple" : "rgba(115, 230, 8, 0.9)"),
+        backgroundColor: machine.backgroundColor || (isSelected ? "purple" : "rgba(255, 230, 0, 0.8)"),
       }}
       onClick={() => onClick(machine)}
       data-id={machine.id}
@@ -112,10 +112,10 @@ function MenuBar() {
         Object.entries(machineStates).forEach(([_, { id, color }]) => {
           const machineIndex = newMachines.findIndex(m => m.id === id);
           if (machineIndex !== -1) {
-            const { red = 115, green = 230, blue = 8 } = color || {};
+            const { red = 255, green = 230, blue = 0 } = color || {};
             newMachines[machineIndex] = {
               ...newMachines[machineIndex],
-              backgroundColor: `rgba(${red}, ${green}, ${blue}, ${0.9})`,
+              backgroundColor: `rgba(${red}, ${green}, ${blue}, ${0.8})`,
             };
           }
         });
@@ -168,10 +168,20 @@ function MenuBar() {
     onError: (error) => console.error("WebSocket error:", error),
     onMessage: (event) => {
       const message = JSON.parse(event.data);
+      console.log("Received message:", message);
+  
+      // Prioritize "endReplay" messages
       if (message.type === "endReplay") {
+        // Immediately process the "endReplay" message
         setReplayMode(false);
+        console.log("Replay ended");
+  
+        // Clear the message queue to prevent further processing
+        messageQueueRef.current = [];
         return;
       }
+  
+      // Add other messages to the queue for processing
       messageQueueRef.current.push(message);
       processMessageQueue();
     },
@@ -301,7 +311,7 @@ function MenuBar() {
     setTimeout(() => {
       setMachines(machines => machines.map(machine => ({
         ...machine,
-        backgroundColor: `rgba(255, 230, 0, 0.6)`,
+        backgroundColor: `rgba(255, 230, 0, 0.8)`,
       })));
       setQueues(queues => queues.map(queue => ({
         ...queue,

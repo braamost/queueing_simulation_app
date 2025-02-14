@@ -3,7 +3,6 @@ package com.back.Controllers;
 import com.back.Configuration.SimulationStateEvent;
 import com.back.DTO.*;
 import com.back.Observer.Machine;
-import com.back.Observer.Process;
 import com.back.Observer.Queue;
 import com.back.Singleton.PausingMechanism;
 import com.back.SnapShot.SimulationHistory;
@@ -12,10 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import java.sql.Time;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
 
 @Service
 public class SimulationService {
@@ -25,7 +22,6 @@ public class SimulationService {
     private final PausingMechanism pausingMechanism = PausingMechanism.getInstance();
     private final SimulationHistory history;
     private SimulationStateDTO currentState = new SimulationStateDTO();
-    private volatile boolean replaying = false;
 
     @Autowired
     public SimulationService(ApplicationEventPublisher eventPublisher) {
@@ -135,54 +131,82 @@ public class SimulationService {
 
     public void replaySimulation() {
         int size = history.size();
-        replaying = true;
-        // initial state
+        pausingMechanism.replay();
+
+        // Initial state
         SimulationMemento prev = history.get();
         eventPublisher.publishEvent(new SimulationStateEvent(this, prev.getState()));
 
-    // replay
-        // get first state
         prev = history.get();
+        if (prev == null) {
+            handleEndReplay();
+            return;
+        }
+
+        // Replay
         long startTime = prev.getState().getCurrentTime();
-        // loop through history
         long endTime = 0;
-        while (size >= 0 && replaying){
+
+        while (size >= 0 && pausingMechanism.isReplaying()) {
+            // Check replay status at the start of each iteration
+            if (!pausingMechanism.isReplaying()) {
+                handleEndReplay();
+                return;
+            }
+
             SimulationMemento memento = history.get();
-            if(memento != null) {
-                // replay the state
+            if (memento != null) {
+                // Replay the state
                 currentState = memento.getState();
                 endTime = currentState.getCurrentTime();
-                eventPublisher.publishEvent(new SimulationStateEvent(this, prev.getState()));
+                eventPublisher.publishEvent(new SimulationStateEvent(this, currentState));
 
-                // sleep till next state
-                try{
-                    Thread.sleep((endTime - startTime));
-                }catch (Exception e) {
-                    System.out.println("help");
+                // Sleep in smaller intervals to check for replay interruption
+                long sleepDuration = endTime - startTime;
+                long sleepInterval = 10; // Sleep in 10ms intervals
+                long remainingSleep = sleepDuration;
+
+                while (remainingSleep > 0) {
+                    // Check replay status before each sleep interval
+                    if (!pausingMechanism.isReplaying()) {
+                        handleEndReplay();
+                        return;
+                    }
+
+                    try {
+                        Thread.sleep(Math.min(sleepInterval, remainingSleep));
+                    } catch (InterruptedException e) {
+                        handleEndReplay();
+                        return;
+                    }
+                    remainingSleep -= sleepInterval;
                 }
 
-                // move to next state
                 startTime = endTime;
                 prev = memento;
-            }else {
-                // replay last state
+            } else {
+                // Check replay status before publishing final state
+                if (!pausingMechanism.isReplaying()) {
+                    handleEndReplay();
+                    return;
+                }
                 eventPublisher.publishEvent(new SimulationStateEvent(this, prev.getState()));
-
-                //end replay
-                SimulationStateDTO state = new SimulationStateDTO();
-                state.setType("endReplay");
-                eventPublisher.publishEvent(new SimulationStateEvent(this, state));
+                break;
             }
             size--;
         }
+
+        handleEndReplay();
     }
 
     public void handleEndReplay() {
-        SimulationStateDTO state = new SimulationStateDTO();
-        state.setType("endReplay");
-        replaying = false;
-        eventPublisher.publishEvent(new SimulationStateEvent(this, state));
-
+        // Only send endReplay event if we were actually replaying
+        if (pausingMechanism.isReplaying()) {
+            SimulationStateDTO state = new SimulationStateDTO();
+            state.setType("endReplay");
+            pausingMechanism.stopReplay();
+            eventPublisher.publishEvent(new SimulationStateEvent(this, state));
+        }
     }
 
     public void pauseSimulation() {
@@ -191,13 +215,5 @@ public class SimulationService {
 
     public void resumeSimulation() {
         pausingMechanism.resume();
-    }
-
-    public Map<String, Queue> getQueues() {
-        return queues;
-    }
-
-    public Map<String, Machine> getMachines() {
-        return machines;
     }
 }

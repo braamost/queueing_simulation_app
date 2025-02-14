@@ -59,7 +59,7 @@ public class Machine extends Observable implements Runnable {
         this.currentProcess = process;
         this.isIdle = false;
         this.color = process.getColor();
-        this.runningTime = (int) (Math.random() * 5000) + 1000;
+        this.runningTime = (int) (Math.random() * 8000) + 2000;
 
         new Thread(this).start();
     }
